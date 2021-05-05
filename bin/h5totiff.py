@@ -10,7 +10,7 @@ This script outputs a float32 file of cumulative displacement from cum*.h5.
 =====
 Usage
 =====
-LiCSBAS_cum2flt.py -d yyyymmdd [-i infile] [-o outfile] [-m yyyymmdd] [-r x1:x2/y1:y2]
+h5totiff.py -d yyyymmdd [-i infile] [-o outfile] [-m yyyymmdd] [-r x1:x2/y1:y2]
      [--ref_geo lon1/lon2/lat1/lat2] [--mask maskfile] [--png] 
 
  -d  Date to be output
@@ -27,14 +27,8 @@ LiCSBAS_cum2flt.py -d yyyymmdd [-i infile] [-o outfile] [-m yyyymmdd] [-r x1:x2/
 """
 #%% Change log
 '''
-v1.2.1 20210107 Yu Morishita, GSI
- - Replace jet with SCM.roma_r
-v1.2 20200703 Yu Morishita, GSI
- - Add --ref_geo option
-v1.1 20190813 Yu Morishita, Uni of Leeds and GSI
- - Bug fix about masking
-v1.0 20190730 Yu Morishita, Uni of Leeds and GSI
- - Original implementationf
+v1.0 20210595 Takayuki Shinoahra, Tokyo Tech
+ - Original implementation
 '''
 
 #%% Import
@@ -64,7 +58,7 @@ def main(argv=None):
         argv = sys.argv
         
     start = time.time()
-    ver="1.2.1"; date=20210107; author="Y. Morishita"
+    ver="1.0"; date=20210505; author="T. Shinohara"
     print("\n{} ver{} {} {}".format(os.path.basename(argv[0]), ver, date, author), flush=True)
     print("{} {}".format(os.path.basename(argv[0]), ' '.join(argv[1:])), flush=True)
 
@@ -108,9 +102,9 @@ def main(argv=None):
             elif o == '--png':
                 pngflag = True
 
-        if not imd_s:
-            raise Usage('No date given, -d is not optional!')
-        elif not os.path.exists(cumfile):
+        # if not imd_s:
+        #     raise Usage('No date given, -d is not optional!')
+        if not os.path.exists(cumfile):
             raise Usage('No {} exists! Use -i option.'.format(cumfile))
 
     except Usage as err:
@@ -127,10 +121,7 @@ def main(argv=None):
     cum = cumh5['cum']
     n_im, length, width = cum.shape
 
-    ### image save
-    for i in range (n_im):
-        print(imdates[i])
-        print(cum[i,:,:].shape)
+
 
     ### Reference area
     if refarea:
@@ -163,39 +154,89 @@ def main(argv=None):
         mask[mask==0] = np.nan
     else:
         mask = np.ones((length, width), dtype=np.float32)
-        
-    ### Check date
-    if not imd_s in imdates:
-        print('\nERROR: No date of {} exist in {}!'.format(imd_s, cumfile), file=sys.stderr)
-        return 2
-    if not imd_m in imdates:
-        print('\nERROR: No date of {} exist in {}!'.format(imd_m, cumfile), file=sys.stderr)
-        return 2
 
-    ix_s = imdates.index(imd_s)
-    ix_m = imdates.index(imd_m)
-    
-    ### Outfile
-    if not outfile:
+    ### 全部のスレイブ画像を処理する
+    for i in range(len(imdates)):
+        imd_s=imdates[i]
+        # print(img_s)
+        ix_s = imdates.index(imd_s)
+        ix_m = imdates.index(imd_m)
+
+        ### Check date
+        if not imd_s in imdates:
+            print('\nERROR: No date of {} exist in {}!'.format(imd_s, cumfile), file=sys.stderr)
+            return 2
+        if not imd_m in imdates:
+            print('\nERROR: No date of {} exist in {}!'.format(imd_m, cumfile), file=sys.stderr)
+            return 2
+
+
         outfile = '{}_{}.cum'.format(imd_m, imd_s)
-
-
-    #%% Make flt
-    cum_s = cum[ix_s, :, :]
-    cum_m = cum[ix_m, :, :]
-
-    cum_dif = cum_s-cum_m
-    cum_dif = cum_dif-np.nanmean(cum_dif[refy1:refy2, refx1:refx2])
-    cum_dif = cum_dif*mask
+        print(outfile)
         
-    cum_dif.tofile(outfile)
+        #%% Make flt
+        cum_s = cum[ix_s, :, :]
+        cum_m = cum[ix_m, :, :]
+
+        cum_dif = cum_s-cum_m
+        cum_dif = cum_dif-np.nanmean(cum_dif[refy1:refy2, refx1:refx2])
+        cum_dif = cum_dif*mask
+            
+        cum_dif.tofile(outfile)
+
+        #%% Make png if specified
+        if pngflag:
+            pngfile = outfile+'.png'
+            title = '{} (Ref X/Y {}:{}/{}:{})'.format(outfile, refx1, refx2, refy1, refy2)
+            plot_lib.make_im_png(cum_dif, pngfile, cmap, title)
+            # ワールドファイル作成
+            twfname = pngfile.replace("cum.png", "tfw") 
+            f = open(twfname, 'w')
+            f.write('0.0009999992\n')
+            f.write('0.0000000000\n')
+            f.write('0.0000000000\n')
+            f.write('-0.0009999992\n')
+            f.write(str(float(cumh5['corner_lon'][()]))+'\n')            
+            f.write(str(float(cumh5['corner_lat'][()]))+'\n')
+
+
+
+
+
+    # ### Check date
+    # if not imd_s in imdates:
+    #     print('\nERROR: No date of {} exist in {}!'.format(imd_s, cumfile), file=sys.stderr)
+    #     return 2
+    # if not imd_m in imdates:
+    #     print('\nERROR: No date of {} exist in {}!'.format(imd_m, cumfile), file=sys.stderr)
+    #     return 2
+    
+
+
+    # ix_s = imdates.index(imd_s)
+    # ix_m = imdates.index(imd_m)
+    
+    # ### Outfile
+    # if not outfile:
+    #     outfile = '{}_{}.cum'.format(imd_m, imd_s)
+
+
+    # #%% Make flt
+    # cum_s = cum[ix_s, :, :]
+    # cum_m = cum[ix_m, :, :]
+
+    # cum_dif = cum_s-cum_m
+    # cum_dif = cum_dif-np.nanmean(cum_dif[refy1:refy2, refx1:refx2])
+    # cum_dif = cum_dif*mask
+        
+    # cum_dif.tofile(outfile)
 
        
-    #%% Make png if specified
-    if pngflag:
-        pngfile = outfile+'.png'
-        title = '{} (Ref X/Y {}:{}/{}:{})'.format(outfile, refx1, refx2, refy1, refy2)
-        plot_lib.make_im_png(cum_dif, pngfile, cmap, title)
+    # #%% Make png if specified
+    # if pngflag:
+    #     pngfile = outfile+'.png'
+    #     title = '{} (Ref X/Y {}:{}/{}:{})'.format(outfile, refx1, refx2, refy1, refy2)
+    #     plot_lib.make_im_png(cum_dif, pngfile, cmap, title)
     
 
     #%% Finish

@@ -39,7 +39,7 @@ from matplotlib import dates as mdates
 
 import LiCSBAS_tools_lib as tools_lib
 import LiCSBAS_inv_lib as inv_lib
-
+import imageio
 
 #%%
 def make_im_png(data, pngfile, cmap, title, vmin=None, vmax=None, cbar=True):
@@ -56,6 +56,9 @@ def make_im_png(data, pngfile, cmap, title, vmin=None, vmax=None, cbar=True):
         interp = 'nearest' #'antialiased'
     
     length, width = data.shape
+    ### save as tif
+    imageio.imwrite(pngfile.replace("cum.png", "tif"), data)
+
     figsizex = 8
     xmergin = 2 if cbar else 0
     figsizey = int((figsizex-xmergin)*(length/width))+1
