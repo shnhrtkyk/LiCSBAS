@@ -122,6 +122,7 @@ import LiCSBAS_io_lib as io_lib
 import LiCSBAS_tools_lib as tools_lib
 import LiCSBAS_inv_lib as inv_lib
 import LiCSBAS_plot_lib as plot_lib
+import imageio
 
 class Usage(Exception):
     """Usage context manager"""
@@ -501,6 +502,11 @@ def main(argv=None):
     ### Rerferencing cumulative displacement to new stable ref
     for i in range(n_im):
         cum_filt[i, :, :] = cum_filt[i, :, :] - cum[i, refy1s, refx1s]
+        # save to image 
+        imageio.imwrite(f'./test.tiff', image)
+        
+        
+
     del cum
 
     ### Save image
