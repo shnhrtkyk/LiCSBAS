@@ -158,7 +158,7 @@ def main(argv=None):
     
     ### save mask
     # save as tif
-    imageio.imwrite(outfile.replace(".cum", "_mask.tif"), data)
+    imageio.imwrite(outfile.replace(".cum", "_mask.tif"), mask)
 
     # ワールドファイル作成
     twfname = outfile.replace(".cum", "_mask.tfw") 
