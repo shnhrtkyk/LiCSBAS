@@ -43,6 +43,7 @@ import SCM
 import LiCSBAS_io_lib as io_lib
 import LiCSBAS_tools_lib as tools_lib
 import LiCSBAS_plot_lib as plot_lib
+import imageio
 
 class Usage(Exception):
     """Usage context manager"""
@@ -154,7 +155,20 @@ def main(argv=None):
         mask[mask==0] = np.nan
     else:
         mask = np.ones((length, width), dtype=np.float32)
+    
+    ### save mask
+    # save as tif
+    imageio.imwrite(outfile.replace(".cum", "_mask.tif"), data)
 
+    # ワールドファイル作成
+    twfname = outfile.replace(".cum", "_mask.tfw") 
+    f = open(twfname, 'w')
+    f.write('0.0009999992\n')
+    f.write('0.0000000000\n')
+    f.write('0.0000000000\n')
+    f.write('-0.0009999992\n')
+    f.write(str(float(cumh5['corner_lon'][()]))+'\n')            
+    f.write(str(float(cumh5['corner_lat'][()]))+'\n')
     ### 全部のスレイブ画像を処理する
     for i in range(len(imdates)):
         imd_s=imdates[i]
