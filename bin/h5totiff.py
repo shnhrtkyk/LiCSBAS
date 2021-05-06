@@ -202,43 +202,6 @@ def main(argv=None):
 
 
 
-
-    # ### Check date
-    # if not imd_s in imdates:
-    #     print('\nERROR: No date of {} exist in {}!'.format(imd_s, cumfile), file=sys.stderr)
-    #     return 2
-    # if not imd_m in imdates:
-    #     print('\nERROR: No date of {} exist in {}!'.format(imd_m, cumfile), file=sys.stderr)
-    #     return 2
-    
-
-
-    # ix_s = imdates.index(imd_s)
-    # ix_m = imdates.index(imd_m)
-    
-    # ### Outfile
-    # if not outfile:
-    #     outfile = '{}_{}.cum'.format(imd_m, imd_s)
-
-
-    # #%% Make flt
-    # cum_s = cum[ix_s, :, :]
-    # cum_m = cum[ix_m, :, :]
-
-    # cum_dif = cum_s-cum_m
-    # cum_dif = cum_dif-np.nanmean(cum_dif[refy1:refy2, refx1:refx2])
-    # cum_dif = cum_dif*mask
-        
-    # cum_dif.tofile(outfile)
-
-       
-    # #%% Make png if specified
-    # if pngflag:
-    #     pngfile = outfile+'.png'
-    #     title = '{} (Ref X/Y {}:{}/{}:{})'.format(outfile, refx1, refx2, refy1, refy2)
-    #     plot_lib.make_im_png(cum_dif, pngfile, cmap, title)
-    
-
     #%% Finish
     elapsed_time = time.time()-start
     hour = int(elapsed_time/3600)
