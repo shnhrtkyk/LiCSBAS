@@ -27,7 +27,9 @@ h5totiff.py -d yyyymmdd [-i infile] [-o outfile] [-m yyyymmdd] [-r x1:x2/y1:y2]
 """
 #%% Change log
 '''
-v1.0 20210595 Takayuki Shinoahra, Tokyo Tech
+v1.1 20210507 Takayuki Shinoahra, Tokyo Tech
+ - Export as Geotiff without world file, export mask data as geotif
+v1.0 20210505 Takayuki Shinoahra, Tokyo Tech
  - Original implementation
 '''
 
@@ -173,30 +175,7 @@ def main(argv=None):
     compress_option = ['COMPRESS=DEFLATE', 'PREDICTOR=3']
     nodata = np.nan
     io_lib.make_geotiff(mask, lat_n_p, lon_w_p, dlat, dlon, "./mask.tif", compress_option, nodata)
-    # dtype = gdal.GDT_Float32 # float指定
-    # band = 1 # バンド数
-    # output = gdal.GetDriverByName('GTiff').Create(outfile.replace(".cum", "_gdal_mask.tif"), width, length, band, dtype) # 空の出力ファイル
 
-    # output.SetGeoTransform((0.0009999992, -0.0009999992, 0, float(cumh5['corner_lon'][()]), 0, -float(cumh5['corner_lat'][()]))) # 座標系指定
-    # srs = osr.SpatialReference() # 空間参照情報
-    # srs.ImportFromEPSG(4326) # EPSG 4326に座標系を指定
-    # output.SetProjection(srs.ExportToWkt()) # 空間情報を結合
-
-    # output.GetRasterBand(1).WriteArray(mask)   # 赤バンド書き出し（b1はnumpy 2次元配列）
-    # output.FlushCache()                     # ディスクに書き出し
-    # output = None                           
-    # save as .tif
-    # imageio.imwrite("./mask.tif", mask)
-
-    # # ワールドファイル作成
-    # twfname = "mask.tfw"
-    # f = open(twfname, 'w')
-    # f.write('0.0009999992\n')
-    # f.write('0.0000000000\n')
-    # f.write('0.0000000000\n')
-    # f.write('-0.0009999992\n')
-    # f.write(str(float(cumh5['corner_lon'][()]))+'\n')            
-    # f.write(str(float(cumh5['corner_lat'][()]))+'\n')
     ### 全部のスレイブ画像を処理する
     for i in range(len(imdates)):
         imd_s=imdates[i]
@@ -233,15 +212,6 @@ def main(argv=None):
             pngfile = outfile+'.png'
             title = '{} (Ref X/Y {}:{}/{}:{})'.format(outfile, refx1, refx2, refy1, refy2)
             plot_lib.make_im_png(cum_dif, pngfile, cmap, title)
-            # # ワールドファイル作成
-            # twfname = pngfile.replace("cum.png", "tfw") 
-            # f = open(twfname, 'w')
-            # f.write('0.0009999992\n')
-            # f.write('0.0000000000\n')
-            # f.write('0.0000000000\n')
-            # f.write('-0.0009999992\n')
-            # f.write(str(float(cumh5['corner_lon'][()]))+'\n')            
-            # f.write(str(float(cumh5['corner_lat'][()]))+'\n')
 
 
 
