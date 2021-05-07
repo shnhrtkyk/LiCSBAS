@@ -44,6 +44,8 @@ import LiCSBAS_io_lib as io_lib
 import LiCSBAS_tools_lib as tools_lib
 import LiCSBAS_plot_lib as plot_lib
 import imageio
+from osgeo import gdal, gdalconst, gdal_array, ogr
+
 
 class Usage(Exception):
     """Usage context manager"""
@@ -152,23 +154,49 @@ def main(argv=None):
     ### mask
     if maskfile:
         mask = io_lib.read_img(maskfile, length, width)
-        mask[mask==0] = np.nan
+        # mask[mask==0] = np.nan
     else:
         mask = np.ones((length, width), dtype=np.float32)
+        ix_m = imdates.index(imd_m)
+        mask[np.isnan(cum[ix_m, :, :])] = np.nan
     
     ### save mask
-    # save as tif
-    imageio.imwrite(outfile.replace(".cum", "_mask.tif"), mask)
+    # # save as geotiff
+    dlat = -0.0009999992325901985
+    dlon = 0.0009999992325901985
+    lat_n_g = float(cumh5['corner_lat'][()]) #grid reg
+    lon_w_g = float(cumh5['corner_lon'][()]) #grid reg∂
 
-    # ワールドファイル作成
-    twfname = outfile.replace(".cum", "_mask.tfw") 
-    f = open(twfname, 'w')
-    f.write('0.0009999992\n')
-    f.write('0.0000000000\n')
-    f.write('0.0000000000\n')
-    f.write('-0.0009999992\n')
-    f.write(str(float(cumh5['corner_lon'][()]))+'\n')            
-    f.write(str(float(cumh5['corner_lat'][()]))+'\n')
+    ## Grid registration to pixel registration by shifing half pixel
+    lat_n_p = lat_n_g - dlat/2
+    lon_w_p = lon_w_g - dlon/2
+    compress_option = ['COMPRESS=DEFLATE', 'PREDICTOR=3']
+    nodata = np.nan
+    io_lib.make_geotiff(mask, lat_n_p, lon_w_p, dlat, dlon, "./mask.tif", compress_option, nodata)
+    # dtype = gdal.GDT_Float32 # float指定
+    # band = 1 # バンド数
+    # output = gdal.GetDriverByName('GTiff').Create(outfile.replace(".cum", "_gdal_mask.tif"), width, length, band, dtype) # 空の出力ファイル
+
+    # output.SetGeoTransform((0.0009999992, -0.0009999992, 0, float(cumh5['corner_lon'][()]), 0, -float(cumh5['corner_lat'][()]))) # 座標系指定
+    # srs = osr.SpatialReference() # 空間参照情報
+    # srs.ImportFromEPSG(4326) # EPSG 4326に座標系を指定
+    # output.SetProjection(srs.ExportToWkt()) # 空間情報を結合
+
+    # output.GetRasterBand(1).WriteArray(mask)   # 赤バンド書き出し（b1はnumpy 2次元配列）
+    # output.FlushCache()                     # ディスクに書き出し
+    # output = None                           
+    # save as .tif
+    # imageio.imwrite("./mask.tif", mask)
+
+    # # ワールドファイル作成
+    # twfname = "mask.tfw"
+    # f = open(twfname, 'w')
+    # f.write('0.0009999992\n')
+    # f.write('0.0000000000\n')
+    # f.write('0.0000000000\n')
+    # f.write('-0.0009999992\n')
+    # f.write(str(float(cumh5['corner_lon'][()]))+'\n')            
+    # f.write(str(float(cumh5['corner_lat'][()]))+'\n')
     ### 全部のスレイブ画像を処理する
     for i in range(len(imdates)):
         imd_s=imdates[i]
@@ -198,20 +226,22 @@ def main(argv=None):
             
         cum_dif.tofile(outfile)
 
+        io_lib.make_geotiff(cum_dif, lat_n_p, lon_w_p, dlat, dlon, pngfile.replace("cum", "tif") , compress_option, nodata)
+
         #%% Make png if specified
         if pngflag:
             pngfile = outfile+'.png'
             title = '{} (Ref X/Y {}:{}/{}:{})'.format(outfile, refx1, refx2, refy1, refy2)
             plot_lib.make_im_png(cum_dif, pngfile, cmap, title)
-            # ワールドファイル作成
-            twfname = pngfile.replace("cum.png", "tfw") 
-            f = open(twfname, 'w')
-            f.write('0.0009999992\n')
-            f.write('0.0000000000\n')
-            f.write('0.0000000000\n')
-            f.write('-0.0009999992\n')
-            f.write(str(float(cumh5['corner_lon'][()]))+'\n')            
-            f.write(str(float(cumh5['corner_lat'][()]))+'\n')
+            # # ワールドファイル作成
+            # twfname = pngfile.replace("cum.png", "tfw") 
+            # f = open(twfname, 'w')
+            # f.write('0.0009999992\n')
+            # f.write('0.0000000000\n')
+            # f.write('0.0000000000\n')
+            # f.write('-0.0009999992\n')
+            # f.write(str(float(cumh5['corner_lon'][()]))+'\n')            
+            # f.write(str(float(cumh5['corner_lat'][()]))+'\n')
 
 
 
