@@ -205,7 +205,7 @@ def main(argv=None):
             
         cum_dif.tofile(outfile)
 
-        io_lib.make_geotiff(cum_dif, lat_n_p, lon_w_p, dlat, dlon, pngfile.replace("cum", "tif") , compress_option, nodata)
+        io_lib.make_geotiff(cum_dif, lat_n_p, lon_w_p, dlat, dlon, outfile.replace("cum", "tif") , compress_option, nodata)
 
         #%% Make png if specified
         if pngflag:
