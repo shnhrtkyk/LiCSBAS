@@ -22,6 +22,7 @@ h5totiff.py -d yyyymmdd [-i infile] [-o outfile] [-m yyyymmdd] [-r x1:x2/y1:y2]
      0 for x2/y2 means all. (i.e., 0:0/0:0 means whole area).
  --ref_geo  Reference area in geographical coordinates.
  --mask  Path to mask file for ref phase calculation (Default: No mask)
+ --coherence  Path to average coherence file (Default: "")
  --png   Make png file (Default: Not make png)
 
 """
@@ -76,6 +77,7 @@ def main(argv=None):
     refarea = []
     refarea_geo = []
     maskfile = []
+    avg_coh = []
     pngflag = False
     cmap = SCM.roma.reversed()
 
@@ -104,6 +106,8 @@ def main(argv=None):
                 refarea_geo = a
             elif o == '--mask':
                 maskfile = a
+            elif o == '--coherence':
+                coh_avg = a
             elif o == '--png':
                 pngflag = True
 
@@ -156,14 +160,13 @@ def main(argv=None):
     ### mask
     if maskfile:
         mask = io_lib.read_img(maskfile, length, width)
-        # mask[mask==0] = np.nan
     else:
         mask = np.ones((length, width), dtype=np.float32)
         ix_m = imdates.index(imd_m)
         mask[np.isnan(cum[ix_m, :, :])] = np.nan
     
     ### save mask
-    # # save as geotiff
+    ## save as geotiff
     dlat = -0.0009999992325901985
     dlon = 0.0009999992325901985
     lat_n_g = float(cumh5['corner_lat'][()]) #grid reg
@@ -175,6 +178,24 @@ def main(argv=None):
     compress_option = ['COMPRESS=DEFLATE', 'PREDICTOR=3']
     nodata = np.nan
     io_lib.make_geotiff(mask, lat_n_p, lon_w_p, dlat, dlon, "./mask.tif", compress_option, nodata)
+
+    ## Load Mean Coherence file and save as Geotiff image
+    if avg_coh:
+        coherence_img = io_lib.read_img(avg_coh, length, width)
+        ### save average coherence
+        ## save as geotiff
+        dlat = -0.0009999992325901985
+        dlon = 0.0009999992325901985
+        lat_n_g = float(cumh5['corner_lat'][()]) #grid reg
+        lon_w_g = float(cumh5['corner_lon'][()]) #grid reg∂
+
+        ## Grid registration to pixel registration by shifing half pixel
+        lat_n_p = lat_n_g - dlat/2
+        lon_w_p = lon_w_g - dlon/2
+        compress_option = ['COMPRESS=DEFLATE', 'PREDICTOR=3']
+        nodata = np.nan
+        io_lib.make_geotiff(coherence_img, lat_n_p, lon_w_p, dlat, dlon, "./coh_avg.tif", compress_option, nodata)
+
 
     ### 全部のスレイブ画像を処理する
     for i in range(len(imdates)):
