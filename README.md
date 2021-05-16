@@ -18,6 +18,23 @@ See the [**wiki**](https://github.com/yumorishita/LiCSBAS/wiki) pages and [quick
 
 If you have found an issue or bug, please report it on the [issues page](https://github.com/yumorishita/LiCSBAS/issues), rather than emailing me.
 
+
+## 追加機能
+- 最終結果の.h5からgeotiffに変換するスクリプトを追加
+    - 使い方
+        -  最終結果の.h5ファイルから各マスター - スレーブ画像間の変位量 mmへ書き出すスクリプト (h5totiff.py)です．  
+`         python /bin/h5totiff.py -i path/to/cum_filt.h5 --mask /path/to/mask --coherence /path/to/coherence ` 
+       を実行する必要があります．  
+        * 引数  
+                -i  最終結果のcum_filt.h5ファイルへのパス  
+                --mask cum_filt.h5の保存されたフォルダにあるresultフォルダ内に格納されたmaskファイルへのパス  
+        カレントディレクトリにgeotif(master_slave.tif)書き出されます．また，マスクの出力も同様にカレントディレクトリにmask.tifが書き出されます．  
+               --coherence cum_filt.h5の保存されたフォルダにあるresultフォルダ内に格納された平均コヒーレンスファイルへのパス    
+        * 出力  
+        カレントディレクトリにgeotif(master_slave.tif)書き出されます．また，マスクの出力も同様にカレントディレクトリにmask.tif、coherence.tifが書き出されます．      
+            
+
+
 ## Sample Products and Tutorial
 
 - Frame ID: 124D_04854_171313 (Italy)
