@@ -85,7 +85,7 @@ def main(argv=None):
     #%% Read options
     try:
         try:
-            opts, args = getopt.getopt(argv[1:], "hd:i:o:m:r:", ["help", "png", "ref_geo=", "mask="])
+            opts, args = getopt.getopt(argv[1:], "hd:i:o:m:r:", ["help", "png", "ref_geo=", "mask=", "coherence="])
         except getopt.error as msg:
             raise Usage(msg)
         for o, a in opts:
